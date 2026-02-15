@@ -1,7 +1,23 @@
-import streamlit as st
-import pandas as pd
+import os
 import pickle
+
+import gdown
+import pandas as pd
 import requests
+import streamlit as st
+
+MOVIE_FILE_ID = os.getenv("MOVIE_FILE_ID", "1IGwtMSKCGFsz60aUskDuX_EqORT_uOS9")
+SIMILARITY_FILE_ID = os.getenv("SIMILARITY_FILE_ID", "1oX8Fq3iWzW0QD0fJ-7uX8rhlOHXSlcEA")
+
+
+def ensure_drive_file(file_id, dest_path, label):
+    if os.path.exists(dest_path):
+        return
+    if not file_id:
+        st.error(f"Missing Google Drive file id for {label}. Set {label}_FILE_ID.")
+        st.stop()
+    url = f"https://drive.google.com/uc?id={file_id}"
+    gdown.download(url, dest_path, quiet=False)
 
 @st.cache_data(show_spinner=False)
 def fetch_poster(movie_id):
@@ -42,9 +58,12 @@ def recommend(movie):
 
     return recommended_movie_names, recommended_movie_posters
 
-movies_list=pickle.load(open('movie.pkl','rb'))
-movies=pd.DataFrame(movies_list)
-similarity=pickle.load(open('similarity.pkl','rb'))
+ensure_drive_file(MOVIE_FILE_ID, "movie.pkl", "MOVIE")
+ensure_drive_file(SIMILARITY_FILE_ID, "similarity.pkl", "SIMILARITY")
+
+movies_list = pickle.load(open("movie.pkl", "rb"))
+movies = pd.DataFrame(movies_list)
+similarity = pickle.load(open("similarity.pkl", "rb"))
 
 st.title("Movie Recommender System")
 selected_movie=st.selectbox("Select or Type Movie Name",movies['title'].values)
